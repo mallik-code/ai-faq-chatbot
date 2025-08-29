@@ -1,0 +1,26 @@
+name: Infra as Code Deployment
+
+on:
+  push:
+    paths:
+      - 'infra/**'
+  workflow_dispatch:
+
+jobs:
+  deploy-infra:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Init Terraform
+        run: terraform -chdir=infra init
+
+      - name: Plan Terraform
+        run: terraform -chdir=infra plan
+
+      - name: Apply Terraform
+        run: terraform -chdir=infra apply -auto-approve

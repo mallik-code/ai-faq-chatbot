@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  chat-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "${SERVER_PORT:-8080}:8080"
+    env_file:
+      - .env.${ENVIRONMENT:-development}
+    environment:
+      - SPRING_PROFILES_ACTIVE=${ENVIRONMENT:-development}
+    networks:
+      - aifaq-network
+
+networks:
+  aifaq-network:
+    driver: bridge

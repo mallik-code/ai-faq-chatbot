@@ -1,0 +1,58 @@
+You are an AI coding assistant. Generate a **starter fullstack repository** for an
+AI-powered FAQ Chatbot project.  
+
+Tech stack:  
+- Frontend: ReactJS + Vite + TailwindCSS (for styling)  
+- Backend: Java (Spring Boot) + PostgreSQL  
+- Deployment: Google Cloud Platform (Cloud Run + Cloud SQL)  
+
+Project Structure:
+ai-faq-chatbot/
+│── requirements.md                # Master requirements file
+│
+├── frontend/                       # React + Vite app
+│   ├── requirements.md             # Scoped frontend requirements
+│   ├── index.html
+│   ├── package.json
+│   ├── vite.config.js
+│   ├── tailwind.config.js
+│   └── src/
+│       ├── App.jsx                 # Root React component
+│       ├── main.jsx                # Entry point for Vite
+│       ├── assets/                 # Images, logos, icons
+│       ├── components/             # Reusable React components
+│       │   ├── ChatbotUI.jsx
+│       │   ├── PolicyList.jsx
+│       │   └── Navbar.jsx
+│       ├── pages/                  # App pages
+│       │   ├── Home.jsx
+│       │   └── Admin.jsx
+│       └── services/
+│           └── api.js              # Axios instance for backend calls
+│
+├── backend/                        # Java Spring Boot app
+│   ├── requirements.md             # Scoped backend requirements
+│   ├── pom.xml                     # Maven config
+│   └── src/main/java/com/org/faq/
+│       ├── Application.java        # Spring Boot starter
+│       ├── controller/FAQController.java
+│       ├── service/FAQService.java
+│       ├── model/FAQ.java
+│       └── repository/FAQRepository.java
+│
+├── deployment/                     # Deployment configs
+│   ├── requirements.md             # Scoped deployment requirements
+│   ├── Dockerfile                  # For Cloud Run
+│   ├── cloudbuild.yaml             # GCP Cloud Build CI/CD
+│   └── k8s/                        # (Optional) Kubernetes configs
+│       ├── deployment.yaml
+│       └── service.yaml
+│
+└── README.md                       # Project overview and setup instructions
+
+Additional Notes:
+- Configure TailwindCSS with Vite (PostCSS setup).
+- Use Axios in frontend services/api.js to call backend APIs.
+- Backend connects to PostgreSQL using Spring Data JPA.
+- Provide `.env.example` files for both frontend and backend.
+- Ensure master requirements.md links to scoped requirements in frontend, backend, and deployment.

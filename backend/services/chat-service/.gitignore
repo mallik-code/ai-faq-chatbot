@@ -1,0 +1,8 @@
+.env*
+!.env.template
+*.env
+target/
+*.jar
+*.war
+*.ear
+*.class

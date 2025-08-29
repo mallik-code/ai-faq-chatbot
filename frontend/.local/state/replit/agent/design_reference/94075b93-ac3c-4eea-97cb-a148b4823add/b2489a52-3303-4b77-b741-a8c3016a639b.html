@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI-Powered FAQ Chatbot</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+    tailwind.config = {
+        theme: {
+            extend: {
+                borderRadius: {
+                    lg: "var(--radius)",
+                    md: "calc(var(--radius) - 2px)",
+                    sm: "calc(var(--radius) - 4px)",
+                },
+                colors: {
+                    background: "var(--background)",
+                    foreground: "var(--foreground)",
+                    card: {
+                        DEFAULT: "var(--card)",
+                        foreground: "var(--card-foreground)",
+                    },
+                    popover: {
+                        DEFAULT: "var(--popover)",
+                        foreground: "var(--popover-foreground)",
+                    },
+                    primary: {
+                        DEFAULT: "var(--primary)",
+                        foreground: "var(--primary-foreground)",
+                    },
+                    secondary: {
+                        DEFAULT: "var(--secondary)",
+                        foreground: "var(--secondary-foreground)",
+                    },
+                    muted: {
+                        DEFAULT: "var(--muted)",
+                        foreground: "var(--muted-foreground)",
+                    },
+                    accent: {
+                        DEFAULT: "var(--accent)",
+                        foreground: "var(--accent-foreground)",
+                    },
+                    destructive: {
+                        DEFAULT: "var(--destructive)",
+                        foreground: "var(--destructive-foreground)",
+                    },
+                    border: "var(--border)",
+                    input: "var(--input)",
+                    ring: "var(--ring)",
+                },
+                fontFamily: {
+                    sans: ["Inter", "system-ui", "sans-serif"],
+                }
+            },
+        }
+    };
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --radius: 0.5rem;
+            --background: hsl(210 40% 98%);
+            --foreground: hsl(222 84% 5%);
+            --card: hsl(0 0% 100%);
+            --card-foreground: hsl(222 84% 5%);
+            --popover: hsl(0 0% 100%);
+            --popover-foreground: hsl(222 84% 5%);
+            --primary: hsl(221 83% 53%);
+            --primary-foreground: hsl(210 40% 98%);
+            --secondary: hsl(210 40% 96%);
+            --secondary-foreground: hsl(222 47% 11%);
+            --muted: hsl(210 40% 96%);
+            --muted-foreground: hsl(215 16% 47%);
+            --accent: hsl(210 40% 96%);
+            --accent-foreground: hsl(222 47% 11%);
+            --destructive: hsl(0 84% 60%);
+            --destructive-foreground: hsl(210 40% 98%);
+            --border: hsl(214 32% 91%);
+            --input: hsl(214 32% 91%);
+            --ring: hsl(221 83% 53%);
+        }
+
+        .dark {
+            --background: hsl(222 84% 5%);
+            --foreground: hsl(210 40% 98%);
+            --card: hsl(222 47% 11%);
+            --card-foreground: hsl(210 40% 98%);
+            --popover: hsl(222 47% 11%);
+            --popover-foreground: hsl(210 40% 98%);
+            --primary: hsl(217 91% 60%);
+            --primary-foreground: hsl(222 47% 11%);
+            --secondary: hsl(217 32% 17%);
+            --secondary-foreground: hsl(210 40% 98%);
+            --muted: hsl(217 32% 17%);
+            --muted-foreground: hsl(215 20% 65%);
+            --accent: hsl(217 32% 17%);
+            --accent-foreground: hsl(210 40% 98%);
+            --destructive: hsl(0 63% 31%);
+            --destructive-foreground: hsl(210 40% 98%);
+            --border: hsl(217 32% 17%);
+            --input: hsl(217 32% 17%);
+            --ring: hsl(224 71% 4%);
+        }
+
+        .message-enter {
+            animation: slideUp 0.3s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .typing-indicator {
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 1; }
+        }
+
+        .scrollbar-hide {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+    </style>
+</head>
+<body class="bg-background text-foreground font-sans antialiased">
+    <!-- @COMPONENT: AppLayout -->
+    <div class="flex h-screen overflow-hidden">
+        <!-- @COMPONENT: Sidebar -->
+        <div id="sidebar" class="w-64 bg-card border-r border-border flex flex-col transition-all duration-300 ease-in-out lg:translate-x-0 -translate-x-full fixed lg:relative z-30 h-full">
+            <!-- Sidebar Header -->
+            <div class="p-4 border-b border-border">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+                        <i class="fas fa-robot text-primary-foreground text-sm"></i>
+                    </div>
+                    <div>
+                        <h1 class="font-semibold text-sm">FAQ Assistant</h1>
+                        <p class="text-xs text-muted-foreground">AI-Powered Support</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Navigation -->
+            <nav class="flex-1 p-4">
+                <div class="space-y-2">
+                    <button id="chatTab" class="nav-item active w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors bg-accent text-accent-foreground">
+                        <i class="fas fa-comments w-4 h-4"></i>
+                        Chat
+                    </button>
+                    <button id="adminTab" class="nav-item w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors text-muted-foreground hover:text-foreground hover:bg-accent">
+                        <i class="fas fa-cog w-4 h-4"></i>
+                        Admin Panel
+                    </button>
+                    <button class="nav-item w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors text-muted-foreground hover:text-foreground hover:bg-accent">
+                        <i class="fas fa-chart-bar w-4 h-4"></i>
+                        Analytics
+                    </button>
+                </div>
+            </nav>
+
+            <!-- User Profile -->
+            <div class="p-4 border-t border-border">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 bg-secondary rounded-full flex items-center justify-center">
+                        <i class="fas fa-user text-secondary-foreground text-xs"></i>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-medium truncate" data-bind="user.name">Admin User</p>
+                        <p class="text-xs text-muted-foreground truncate">admin@company.com</p>
+                    </div>
+                    <button class="text-muted-foreground hover:text-foreground">
+                        <i class="fas fa-ellipsis-v text-xs"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <!-- @END_COMPONENT: Sidebar -->
+
+        <!-- Mobile Overlay -->
+        <div id="sidebarOverlay" class="fixed inset-0 bg-black bg-opacity-50 z-20 lg:hidden hidden"></div>
+
+        <!-- @COMPONENT: MainContent -->
+        <div class="flex-1 flex flex-col min-w-0">
+            <!-- @COMPONENT: TopHeader -->
+            <header class="bg-card border-b border-border px-4 py-3 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <button id="sidebarToggle" class="lg:hidden text-muted-foreground hover:text-foreground">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <div>
+                        <h2 id="pageTitle" class="font-semibold text-lg">Chat Assistant</h2>
+                        <p id="pageSubtitle" class="text-sm text-muted-foreground">Ask me anything about our services</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3">
+                    <button class="text-muted-foreground hover:text-foreground">
+                        <i class="fas fa-search"></i>
+                    </button>
+                    <button class="text-muted-foreground hover:text-foreground">
+                        <i class="fas fa-bell"></i>
+                    </button>
+                </div>
+            </header>
+            <!-- @END_COMPONENT: TopHeader -->
+
+            <!-- @COMPONENT: ChatInterface -->
+            <div id="chatInterface" class="flex-1 flex flex-col">
+                <!-- Chat Messages Area -->
+                <div class="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-hide">
+                    <!-- Welcome Message -->
+                    <div class="flex items-start gap-3 max-w-3xl">
+                        <div class="w-8 h-8 bg-primary rounded-full flex items-center justify-center flex-shrink-0">
+                            <i class="fas fa-robot text-primary-foreground text-xs"></i>
+                        </div>
+                        <div class="flex-1">
+                            <div class="bg-card border border-border rounded-lg p-4 shadow-sm">
+                                <p class="text-sm">Hello! I'm your AI assistant. I can help answer questions about our services, policies, and procedures. What would you like to know?</p>
+                            </div>
+                            <p class="text-xs text-muted-foreground mt-2">AI Assistant • Just now</p>
+                        </div>
+                    </div>
+
+                    <!-- Sample User Message -->
+                    <div class="flex items-start gap-3 max-w-3xl ml-auto">
+                        <div class="flex-1 text-right">
+                            <div class="bg-primary text-primary-foreground rounded-lg p-4 inline-block shadow-sm">
+                                <p class="text-sm">What are your business hours?</p>
+                            </div>
+                            <p class="text-xs text-muted-foreground mt-2">You • 2 minutes ago</p>
+                        </div>
+                        <div class="w-8 h-8 bg-secondary rounded-full flex items-center justify-center flex-shrink-0">
+                            <i class="fas fa-user text-secondary-foreground text-xs"></i>
+                        </div>
+                    </div>
+
+                    <!-- Sample AI Response -->
+                    <div class="flex items-start gap-3 max-w-3xl">
+                        <div class="w-8 h-8 bg-primary rounded-full flex items-center justify-center flex-shrink-0">
+                            <i class="fas fa-robot text-primary-foreground text-xs"></i>
+                        </div>
+                        <div class="flex-1">
+                            <div class="bg-card border border-border rounded-lg p-4 shadow-sm">
+                                <p class="text-sm">Our business hours are Monday through Friday, 9:00 AM to 6:00 PM EST. We also offer limited weekend support on Saturdays from 10:00 AM to 2:00 PM EST. Is there anything specific you'd like to know about our services during these hours?</p>
+                            </div>
+                            <p class="text-xs text-muted-foreground mt-2">AI Assistant • 2 minutes ago</p>
+                        </div>
+                    </div>
+
+                    <!-- Loading State (Hidden by default) -->
+                    <div id="typingIndicator" class="flex items-start gap-3 max-w-3xl hidden">
+                        <div class="w-8 h-8 bg-primary rounded-full flex items-center justify-center flex-shrink-0">
+                            <i class="fas fa-robot text-primary-foreground text-xs"></i>
+                        </div>
+                        <div class="flex-1">
+                            <div class="bg-card border border-border rounded-lg p-4 shadow-sm">
+                                <div class="flex items-center gap-1">
+                                    <div class="w-2 h-2 bg-muted-foreground rounded-full typing-indicator"></div>
+                                    <div class="w-2 h-2 bg-muted-foreground rounded-full typing-indicator" style="animation-delay: 0.2s;"></div>
+                                    <div class="w-2 h-2 bg-muted-foreground rounded-full typing-indicator" style="animation-delay: 0.4s;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chat Input Area -->
+                <div class="border-t border-border p-4">
+                    <div class="max-w-3xl mx-auto">
+                        <div class="flex items-end gap-3">
+                            <div class="flex-1">
+                                <textarea 
+                                    id="chatInput"
+                                    placeholder="Type your question here..."
+                                    class="w-full p-3 border border-input rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent bg-background"
+                                    rows="1"
+                                    data-implementation="Auto-resize textarea, handle Enter key"
+                                ></textarea>
+                            </div>
+                            <button 
+                                id="sendButton"
+                                class="bg-primary text-primary-foreground px-4 py-3 rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                data-event="click:handleSendMessage"
+                            >
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
+                        </div>
+                        <p class="text-xs text-muted-foreground mt-2 text-center">Press Enter to send, Shift+Enter for new line</p>
+                    </div>
+                </div>
+            </div>
+            <!-- @END_COMPONENT: ChatInterface -->
+
+            <!-- @COMPONENT: AdminInterface -->
+            <div id="adminInterface" class="flex-1 p-6 overflow-y-auto hidden">
+                <div class="max-w-6xl mx-auto space-y-6">
+                    <!-- Admin Header -->
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h2 class="text-2xl font-bold">FAQ Management</h2>
+                            <p class="text-muted-foreground">Manage your knowledge base and chatbot responses</p>
+                        </div>
+                        <button class="bg-primary text-primary-foreground px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors flex items-center gap-2">
+                            <i class="fas fa-plus"></i>
+                            Add FAQ
+                        </button>
+                    </div>
+
+                    <!-- Stats Cards -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="bg-card border border-border rounded-lg p-6">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm text-muted-foreground">Total FAQs</p>
+                                    <p class="text-2xl font-bold" data-bind="stats.totalFaqs">24</p>
+                                </div>
+                                <div class="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-question-circle text-primary"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-card border border-border rounded-lg p-6">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm text-muted-foreground">Monthly Queries</p>
+                                    <p class="text-2xl font-bold" data-bind="stats.monthlyQueries">1,247</p>
+                                </div>
+                                <div class="w-12 h-12 bg-accent/10 rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-chart-line text-accent-foreground"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-card border border-border rounded-lg p-6">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm text-muted-foreground">Resolution Rate</p>
+                                    <p class="text-2xl font-bold" data-bind="stats.resolutionRate">94%</p>
+                                </div>
+                                <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-check-circle text-green-600"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- FAQ Management Table -->
+                    <div class="bg-card border border-border rounded-lg overflow-hidden">
+                        <div class="p-6 border-b border-border">
+                            <div class="flex items-center justify-between">
+                                <h3 class="text-lg font-semibold">FAQ Database</h3>
+                                <div class="flex items-center gap-3">
+                                    <div class="relative">
+                                        <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground text-sm"></i>
+                                        <input 
+                                            type="text" 
+                                            placeholder="Search FAQs..."
+                                            class="pl-10 pr-4 py-2 border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-ring bg-background"
+                                        >
+                                    </div>
+                                    <select class="px-3 py-2 border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-ring bg-background">
+                                        <option>All Categories</option>
+                                        <option>General</option>
+                                        <option>Billing</option>
+                                        <option>Technical</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="overflow-x-auto">
+                            <table class="w-full">
+                                <thead class="bg-muted/50">
+                                    <tr>
+                                        <th class="text-left p-4 font-medium text-muted-foreground">Question</th>
+                                        <th class="text-left p-4 font-medium text-muted-foreground">Category</th>
+                                        <th class="text-left p-4 font-medium text-muted-foreground">Usage</th>
+                                        <th class="text-left p-4 font-medium text-muted-foreground">Last Updated</th>
+                                        <th class="text-left p-4 font-medium text-muted-foreground">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- @MAP: faqs.map(faq => ( -->
+                                    <tr class="border-b border-border hover:bg-muted/30 transition-colors">
+                                        <td class="p-4">
+                                            <div>
+                                                <p class="font-medium text-sm" data-bind="faq.question">What are your business hours?</p>
+                                                <p class="text-xs text-muted-foreground truncate max-w-xs" data-bind="faq.answer">Our business hours are Monday through Friday...</p>
+                                            </div>
+                                        </td>
+                                        <td class="p-4">
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary" data-bind="faq.category">General</span>
+                                        </td>
+                                        <td class="p-4">
+                                            <span class="text-sm" data-bind="faq.usage">142 times</span>
+                                        </td>
+                                        <td class="p-4">
+                                            <span class="text-sm text-muted-foreground" data-bind="faq.lastUpdated">2 days ago</span>
+                                        </td>
+                                        <td class="p-4">
+                                            <div class="flex items-center gap-2">
+                                                <button class="text-muted-foreground hover:text-primary transition-colors" data-event="click:editFaq">
+                                                    <i class="fas fa-edit text-sm"></i>
+                                                </button>
+                                                <button class="text-muted-foreground hover:text-destructive transition-colors" data-event="click:deleteFaq">
+                                                    <i class="fas fa-trash text-sm"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr class="border-b border-border hover:bg-muted/30 transition-colors">
+                                        <td class="p-4">
+                                            <div>
+                                                <p class="font-medium text-sm">How do I reset my password?</p>
+                                                <p class="text-xs text-muted-foreground truncate max-w-xs">To reset your password, click on the 'Forgot Password'...</p>
+                                            </div>
+                                        </td>
+                                        <td class="p-4">
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-accent/10 text-accent-foreground">Technical</span>
+                                        </td>
+                                        <td class="p-4">
+                                            <span class="text-sm">89 times</span>
+                                        </td>
+                                        <td class="p-4">
+                                            <span class="text-sm text-muted-foreground">1 week ago</span>
+                                        </td>
+                                        <td class="p-4">
+                                            <div class="flex items-center gap-2">
+                                                <button class="text-muted-foreground hover:text-primary transition-colors">
+                                                    <i class="fas fa-edit text-sm"></i>
+                                                </button>
+                                                <button class="text-muted-foreground hover:text-destructive transition-colors">
+                                                    <i class="fas fa-trash text-sm"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr class="border-b border-border hover:bg-muted/30 transition-colors">
+                                        <td class="p-4">
+                                            <div>
+                                                <p class="font-medium text-sm">What payment methods do you accept?</p>
+                                                <p class="text-xs text-muted-foreground truncate max-w-xs">We accept all major credit cards, PayPal, and bank transfers...</p>
+                                            </div>
+                                        </td>
+                                        <td class="p-4">
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">Billing</span>
+                                        </td>
+                                        <td class="p-4">
+                                            <span class="text-sm">67 times</span>
+                                        </td>
+                                        <td class="p-4">
+                                            <span class="text-sm text-muted-foreground">3 days ago</span>
+                                        </td>
+                                        <td class="p-4">
+                                            <div class="flex items-center gap-2">
+                                                <button class="text-muted-foreground hover:text-primary transition-colors">
+                                                    <i class="fas fa-edit text-sm"></i>
+                                                </button>
+                                                <button class="text-muted-foreground hover:text-destructive transition-colors">
+                                                    <i class="fas fa-trash text-sm"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <!-- @END_MAP )) -->
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Pagination -->
+                        <div class="p-4 border-t border-border">
+                            <div class="flex items-center justify-between">
+                                <p class="text-sm text-muted-foreground">Showing 1-10 of 24 FAQs</p>
+                                <div class="flex items-center gap-2">
+                                    <button class="px-3 py-1 border border-border rounded text-sm hover:bg-accent transition-colors disabled:opacity-50" disabled>
+                                        Previous
+                                    </button>
+                                    <button class="px-3 py-1 bg-primary text-primary-foreground rounded text-sm">1</button>
+                                    <button class="px-3 py-1 border border-border rounded text-sm hover:bg-accent transition-colors">2</button>
+                                    <button class="px-3 py-1 border border-border rounded text-sm hover:bg-accent transition-colors">3</button>
+                                    <button class="px-3 py-1 border border-border rounded text-sm hover:bg-accent transition-colors">
+                                        Next
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Recent Chat Activity -->
+                    <div class="bg-card border border-border rounded-lg p-6">
+                        <h3 class="text-lg font-semibold mb-4">Recent Chat Activity</h3>
+                        <div class="space-y-4">
+                            <!-- @MAP: recentChats.map(chat => ( -->
+                            <div class="flex items-start gap-3 p-3 rounded-lg hover:bg-muted/30 transition-colors">
+                                <div class="w-8 h-8 bg-secondary rounded-full flex items-center justify-center flex-shrink-0">
+                                    <i class="fas fa-user text-secondary-foreground text-xs"></i>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-center justify-between">
+                                        <p class="text-sm font-medium" data-bind="chat.userQuestion">User asked about refund policy</p>
+                                        <span class="text-xs text-muted-foreground" data-bind="chat.timestamp">5 min ago</span>
+                                    </div>
+                                    <p class="text-xs text-muted-foreground truncate" data-bind="chat.aiResponse">AI provided information about our 30-day refund policy...</p>
+                                    <div class="flex items-center gap-2 mt-1">
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs bg-green-100 text-green-800">Resolved</span>
+                                        <span class="text-xs text-muted-foreground">Confidence: 95%</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex items-start gap-3 p-3 rounded-lg hover:bg-muted/30 transition-colors">
+                                <div class="w-8 h-8 bg-secondary rounded-full flex items-center justify-center flex-shrink-0">
+                                    <i class="fas fa-user text-secondary-foreground text-xs"></i>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-center justify-between">
+                                        <p class="text-sm font-medium">User asked about shipping options</p>
+                                        <span class="text-xs text-muted-foreground">12 min ago</span>
+                                    </div>
+                                    <p class="text-xs text-muted-foreground truncate">AI explained standard and express shipping options...</p>
+                                    <div class="flex items-center gap-2 mt-1">
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs bg-green-100 text-green-800">Resolved</span>
+                                        <span class="text-xs text-muted-foreground">Confidence: 88%</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- @END_MAP )) -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- @END_COMPONENT: AdminInterface -->
+        </div>
+        <!-- @END_COMPONENT: MainContent -->
+    </div>
+    <!-- @END_COMPONENT: AppLayout -->
+
+    <script>
+        (function() {
+            // @STATE: activeTab:string = 'chat'
+            let activeTab = 'chat';
+            
+            // DOM elements
+            const sidebar = document.getElementById('sidebar');
+            const sidebarOverlay = document.getElementById('sidebarOverlay');
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            const chatTab = document.getElementById('chatTab');
+            const adminTab = document.getElementById('adminTab');
+            const chatInterface = document.getElementById('chatInterface');
+            const adminInterface = document.getElementById('adminInterface');
+            const pageTitle = document.getElementById('pageTitle');
+            const pageSubtitle = document.getElementById('pageSubtitle');
+            const chatInput = document.getElementById('chatInput');
+            const sendButton = document.getElementById('sendButton');
+            const typingIndicator = document.getElementById('typingIndicator');
+
+            // Navigation handling
+            function setActiveTab(tab) {
+                activeTab = tab;
+                
+                // Update navigation styles
+                document.querySelectorAll('.nav-item').forEach(item => {
+                    item.classList.remove('active', 'bg-accent', 'text-accent-foreground');
+                    item.classList.add('text-muted-foreground', 'hover:text-foreground', 'hover:bg-accent');
+                });
+                
+                if (tab === 'chat') {
+                    chatTab.classList.add('active', 'bg-accent', 'text-accent-foreground');
+                    chatTab.classList.remove('text-muted-foreground', 'hover:text-foreground', 'hover:bg-accent');
+                    chatInterface.classList.remove('hidden');
+                    adminInterface.classList.add('hidden');
+                    pageTitle.textContent = 'Chat Assistant';
+                    pageSubtitle.textContent = 'Ask me anything about our services';
+                } else if (tab === 'admin') {
+                    adminTab.classList.add('active', 'bg-accent', 'text-accent-foreground');
+                    adminTab.classList.remove('text-muted-foreground', 'hover:text-foreground', 'hover:bg-accent');
+                    chatInterface.classList.add('hidden');
+                    adminInterface.classList.remove('hidden');
+                    pageTitle.textContent = 'Admin Panel';
+                    pageSubtitle.textContent = 'Manage FAQs and monitor chat activity';
+                }
+            }
+
+            // Mobile sidebar toggle
+            function toggleSidebar() {
+                const isOpen = !sidebar.classList.contains('-translate-x-full');
+                if (isOpen) {
+                    sidebar.classList.add('-translate-x-full');
+                    sidebarOverlay.classList.add('hidden');
+                } else {
+                    sidebar.classList.remove('-translate-x-full');
+                    sidebarOverlay.classList.remove('hidden');
+                }
+            }
+
+            // Chat functionality
+            function handleSendMessage() {
+                const message = chatInput.value.trim();
+                if (!message) return;
+
+                // TODO: Implement message sending logic
+                // - Add user message to chat
+                // - Show typing indicator
+                // - Call OpenAI API
+                // - Add AI response to chat
+                // - Handle errors appropriately
+                
+                chatInput.value = '';
+                console.log('Sending message:', message);
+            }
+
+            // Auto-resize textarea
+            function autoResizeTextarea() {
+                chatInput.style.height = 'auto';
+                chatInput.style.height = chatInput.scrollHeight + 'px';
+            }
+
+            // Event listeners
+            sidebarToggle?.addEventListener('click', toggleSidebar);
+            sidebarOverlay?.addEventListener('click', toggleSidebar);
+            chatTab?.addEventListener('click', () => setActiveTab('chat'));
+            adminTab?.addEventListener('click', () => setActiveTab('admin'));
+            sendButton?.addEventListener('click', handleSendMessage);
+            
+            chatInput?.addEventListener('input', autoResizeTextarea);
+            chatInput?.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSendMessage();
+                }
+            });
+
+            // Initialize
+            setActiveTab('chat');
+        })();
+    </script>
+</body>
+</html>
